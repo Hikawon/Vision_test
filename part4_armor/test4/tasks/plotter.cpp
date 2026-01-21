@@ -1,0 +1,37 @@
+//
+// Created by nirvana on 2025/9/15.
+//
+
+#include "plotter.h"
+#include "armor.hpp"
+
+#include <opencv2/opencv.hpp>
+#include <arpa/inet.h>   // htons,inet_addr
+#include <sys/socket.h>  // socket,sendto
+#include <unistd.h>      // close
+
+namespace auto_aim
+{
+    Plotter::Plotter(std::string host, uint16_t port)
+{
+    socket_ = ::socket(AF_INET, SOCK_DGRAM, 0);
+
+      destination_.sin_family = AF_INET;
+      destination_.sin_port = ::htons(port);
+      destination_.sin_addr.s_addr = ::inet_addr(host.c_str());
+}
+
+Plotter::~Plotter()
+{
+    ::close(socket_);
+}
+
+  //void Plotter::plot(const cv::Mat & img, const std::list<Armor> & armors)
+ void Plotter::plot(const nlohmann::json & json)
+{
+      auto data = json.dump();
+      ::sendto(
+        socket_, data.c_str(), data.length(), 0, reinterpret_cast<sockaddr *>(&destination_),
+        sizeof(destination_));
+}
+}     // namespace auto_aim
